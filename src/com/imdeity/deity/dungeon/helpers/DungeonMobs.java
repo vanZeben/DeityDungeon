@@ -22,9 +22,22 @@ import com.imdeity.deityapi.Deity;
 public class DungeonMobs implements Runnable {
 
 	private String name = "";
+	private CreatureType type = null;
+	private Location spawnLocation = null;
+	private int amount = 0;
 
 	public DungeonMobs(String name) {
 		this.name = name;
+		this.type = DungeonMobs.getCreatureType(DeityDungeon.settings.getSpawnMob(this.name));
+		this.spawnLocation = DeityDungeon.settings.getSpawnLocation(this.name);
+		this.amount = DeityDungeon.settings.getSpawnMobAmount(this.name);
+	}
+
+	public DungeonMobs(CreatureType type, Location location, int amount) {
+		this.name = "";
+		this.type = type;
+		this.spawnLocation = location;
+		this.amount = amount;
 	}
 
 	public static String getMobName(Entity entity) {
@@ -57,7 +70,9 @@ public class DungeonMobs implements Runnable {
 	}
 
 	public static CreatureType getCreatureType(String name) {
-		if (name.equalsIgnoreCase("blaze")) {
+		if (name == null || name.equalsIgnoreCase("")) {
+			return null;
+		} else if (name.equalsIgnoreCase("blaze")) {
 			return CreatureType.BLAZE;
 		} else if (name.equalsIgnoreCase("cavespider")) {
 			return CreatureType.CAVE_SPIDER;
@@ -89,19 +104,19 @@ public class DungeonMobs implements Runnable {
 		Deity.server.getServer().getScheduler().scheduleAsyncDelayedTask(Deity.plugin, new DungeonMobs(name));
 	}
 
+	public static void schedualMobSpawn(CreatureType type, Location location, int amount) {
+		Deity.server.getServer().getScheduler().scheduleAsyncDelayedTask(Deity.plugin, new DungeonMobs(type, location, amount));
+	}
+
 	@Override
 	public void run() {
 		try {
-			CreatureType mob = DungeonMobs.getCreatureType(DeityDungeon.settings.getSpawnMob(this.name));
-			Location spawnLocation = DeityDungeon.settings.getSpawnLocation(this.name);
-			System.out.println(DeityDungeon.settings.getSpawnMobAmount(this.name)+" "+this.name);
-			for (int i = 0; i < DeityDungeon.settings.getSpawnMobAmount(this.name); i++) {
-				if (mob != null) {
-					spawnLocation.getWorld().spawnCreature(spawnLocation, mob);
+			for (int i = 0; i < amount; i++) {
+				if (this.type != null) {
+					spawnLocation.getWorld().spawnCreature(this.spawnLocation, type);
 				}
 			}
 		} catch (Exception ex) {
-
 		}
 	}
 

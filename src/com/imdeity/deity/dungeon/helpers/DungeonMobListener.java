@@ -20,8 +20,11 @@ import org.bukkit.entity.Zombie;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
+import org.bukkit.event.entity.CreatureSpawnEvent;
 import org.bukkit.event.entity.EntityDamageByEntityEvent;
 import org.bukkit.event.entity.EntityDamageEvent;
+import org.bukkit.event.entity.EntityDeathEvent;
+import org.bukkit.inventory.ItemStack;
 
 import com.imdeity.deity.dungeon.DeityDungeon;
 import com.imdeity.deityapi.Deity;
@@ -50,9 +53,9 @@ public class DungeonMobListener implements Listener {
 				}
 			}
 			if (defender instanceof Player) {
-				if (attacker instanceof Blaze || attacker instanceof CaveSpider || attacker instanceof Creeper || attacker instanceof Enderman || attacker instanceof EnderDragon || attacker instanceof Ghast || attacker instanceof MagmaCube || attacker instanceof PigZombie || attacker instanceof Silverfish || attacker instanceof Skeleton || attacker instanceof Spider || attacker instanceof Wolf || attacker instanceof Zombie) {
+				if (checkMobs(attacker)) {
 					// mob fighting player
-					int damage = 0;
+					int damage = 1;
 					int fireArrowDamage = 0;
 					for (String s : Deity.sec.getRegionsAtLocation(attacker.getLocation())) {
 						// used to get highest damage rate
@@ -77,9 +80,9 @@ public class DungeonMobListener implements Listener {
 					return;
 				}
 			} else if (attacker instanceof Player) {
-				if (defender instanceof Blaze || defender instanceof CaveSpider || defender instanceof Creeper || defender instanceof Enderman || defender instanceof EnderDragon || defender instanceof Ghast || defender instanceof MagmaCube || defender instanceof PigZombie || defender instanceof Silverfish || defender instanceof Skeleton || defender instanceof Spider || defender instanceof Wolf || defender instanceof Zombie) {
+				if (checkMobs(defender)) {
 					// player fighting mob
-					int damage = 0;
+					int damage = 1;
 					for (String s : Deity.sec.getRegionsAtLocation(attacker.getLocation())) {
 						// used to get highest damage rate
 						if (DeityDungeon.settings.getRegionMobDamageReceived(s, DungeonMobs.getMobName(defender)) > damage) {
@@ -98,5 +101,47 @@ public class DungeonMobListener implements Listener {
 				}
 			}
 		}
+	}
+
+	@EventHandler(priority = EventPriority.MONITOR)
+	public void onCreatureSpawn(CreatureSpawnEvent event) {
+		if (event.isCancelled()) {
+			return;
+		}
+		Entity entity = event.getEntity();
+		if (entity instanceof Wolf) {
+			((Wolf) entity).setAngry(true);
+		} else if (entity instanceof PigZombie) {
+			((PigZombie) entity).setAngry(true);
+		}
+	}
+
+	@EventHandler(priority = EventPriority.MONITOR)
+	public void onEntityDeath(EntityDeathEvent event) {
+		Entity entity = event.getEntity();
+		if (checkMobs(entity)) {
+			if ((1 + (int) (Math.random() * 10)) <= 3) {
+				DungeonMobs.schedualMobSpawn(DungeonMobs.getCreatureType(DungeonMobs.getMobName(entity)), entity.getLocation(), 1);
+			}
+			for (String s : Deity.sec.getRegionsAtLocation(entity.getLocation())) {
+				if (DeityDungeon.settings.getRegionMobDropsItem(s, DungeonMobs.getMobName(entity)) > 0) {
+					int id = DeityDungeon.settings.getRegionMobDropsItem(s, DungeonMobs.getMobName(entity));
+					int amount = DeityDungeon.settings.getRegionMobDropsAmount(s, DungeonMobs.getMobName(entity));
+					event.getDrops().clear();
+					event.getDrops().add(new ItemStack(id, amount));
+					event.getDrops().add(new ItemStack(371, 1));
+					break;
+				}
+			}
+
+		}
+	}
+
+	public boolean checkMobs(Entity entity) {
+		if (entity instanceof Blaze || entity instanceof CaveSpider || entity instanceof Creeper || entity instanceof Enderman || entity instanceof EnderDragon || entity instanceof Ghast || entity instanceof MagmaCube || entity instanceof PigZombie || entity instanceof Silverfish || entity instanceof Skeleton || entity instanceof Spider || entity instanceof Wolf || entity instanceof Zombie) {
+			return true;
+		}
+		return false;
+
 	}
 }

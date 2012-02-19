@@ -22,6 +22,12 @@ public class DungeonSettings {
 		if (!this.config.contains("dungeon.region.dungeon_one.damage_received.zombie")) {
 			this.config.set("dungeon.region.dungeon_one.damage_received.zombie", -1);
 		}
+		if (!this.config.contains("dungeon.region.dungeon_one.drops.zombie.item")) {
+			this.config.set("dungeon.region.dungeon_one.drops.zombie.item", 371);
+		}
+		if (!this.config.contains("dungeon.region.dungeon_one.drops.zombie.amount")) {
+			this.config.set("dungeon.region.dungeon_one.drops.zombie.amount", 2);
+		}
 		if (!this.config.contains("dungeon.region.dungeon_one.skeleton_flame_arrow")) {
 			this.config.set("dungeon.region.dungeon_one.skeleton_flame_arrow", 5);
 		}
@@ -61,6 +67,13 @@ public class DungeonSettings {
 
 	public int getRegionMobDamageReceived(String region, String mob) {
 		return this.config.getInt("dungeon.region." + region + ".damage_received." + mob);
+	}
+
+	public int getRegionMobDropsItem(String region, String mob) {
+		return this.config.getInt("dungeon.region." + region + ".drops." + mob+".item");
+	}
+	public int getRegionMobDropsAmount(String region, String mob) {
+		return this.config.getInt("dungeon.region." + region + ".drops." + mob+".amount");
 	}
 
 	public int getRegionSkeletonFire(String region) {
