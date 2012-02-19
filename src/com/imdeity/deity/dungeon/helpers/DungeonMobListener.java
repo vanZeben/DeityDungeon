@@ -26,7 +26,7 @@ import org.bukkit.event.entity.EntityDamageEvent;
 import com.imdeity.deity.dungeon.DeityDungeon;
 import com.imdeity.deityapi.Deity;
 
-public class DungeonMobsListener implements Listener {
+public class DungeonMobListener implements Listener {
 
 	@EventHandler(priority = EventPriority.NORMAL)
 	public void onEntityDamage(EntityDamageEvent event) {
