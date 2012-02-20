@@ -4,5 +4,9 @@
 	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER"/>
 	<classpathentry kind="lib" path="/Users/vanZeben/Dropbox/Public/Server/plugins/DeityAPI.jar"/>
 	<classpathentry kind="lib" path="/Users/vanZeben/Dropbox/Public/Server/craftbukkit.jar"/>
+	<classpathentry kind="lib" path="/Users/vanZeben/Dropbox/Public/Server/plugins/Multiverse-Core.jar"/>
+	<classpathentry kind="lib" path="/Users/vanZeben/Dropbox/Public/Server/plugins/Multiverse-Portals.jar"/>
+	<classpathentry kind="lib" path="/Users/vanZeben/Dropbox/Public/Server/plugins/WorldEdit.jar"/>
+	<classpathentry kind="lib" path="/Users/vanZeben/Dropbox/Public/Server/plugins/WorldGuard.jar"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>

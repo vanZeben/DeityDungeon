@@ -18,11 +18,15 @@ import org.bukkit.event.player.PlayerChangedWorldEvent;
 import org.bukkit.event.player.PlayerInteractEvent;
 
 import com.imdeity.deity.dungeon.DeityDungeon;
+import com.imdeity.deity.dungeon.objects.Dungeon;
+import com.imdeity.deity.dungeon.objects.DungeonStorage;
 import com.imdeity.deityapi.Deity;
 import com.imdeity.deityapi.cmds.OpenInvPluginCommand;
 import com.imdeity.deityapi.exception.InventoryAlreadySavedException;
 import com.imdeity.deityapi.exception.NoInventorySavedException;
 import com.imdeity.deityapi.utils.PlayerInventoryChest;
+import com.onarandombox.MultiversePortals.MVPortal;
+import com.onarandombox.MultiversePortals.event.MVPortalEvent;
 
 public class DungeonPlayerListener implements Listener {
 
@@ -113,6 +117,36 @@ public class DungeonPlayerListener implements Listener {
 					entityplayer.a(inv);
 					return;
 				}
+			}
+		}
+	}
+
+	@EventHandler(priority = EventPriority.MONITOR)
+	public void onPortalEvent(MVPortalEvent event) {
+		if (event.isCancelled()) {
+			return;
+		}
+		MVPortal portal = event.getSendingPortal();
+		if (portal.getName().startsWith("dungeonport-send-")) {
+			if (!DungeonStorage.isActive(event.getTeleportee().getLocation())) {
+				String regionname = DungeonStorage.getActiveDungeon(event.getDestination().getLocation(event.getTeleportee()));
+				Dungeon dungeon = DungeonStorage.getDungeon(regionname);
+				dungeon.init();
+				dungeon.sendEventMessage(event.getTeleportee().getName() + " has come to join the battle!");
+			} else {
+				DeityDungeon.chat.sendPlayerMessage(event.getTeleportee(), "&cYou are already in a dungeon!");
+				event.setCancelled(true);
+				return;
+			}
+		} else if (portal.getName().startsWith("dungeonport-receive-")) {
+			if (DungeonStorage.isActive(event.getTeleportee().getLocation())) {
+				String regionname = DungeonStorage.getActiveDungeon(event.getTeleportee().getLocation());
+				Dungeon dungeon = DungeonStorage.getDungeon(regionname);
+				dungeon.sendEventMessage(event.getTeleportee().getName() + " left the battle!");
+			} else {
+				DeityDungeon.chat.sendPlayerMessage(event.getTeleportee(), "&cYou are not in a dungeon!");
+				event.setCancelled(true);
+				return;
 			}
 		}
 	}

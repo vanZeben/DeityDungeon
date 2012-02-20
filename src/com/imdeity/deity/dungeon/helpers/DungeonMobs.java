@@ -26,11 +26,11 @@ public class DungeonMobs implements Runnable {
 	private Location spawnLocation = null;
 	private int amount = 0;
 
-	public DungeonMobs(String name) {
+	public DungeonMobs(String region, String name) {
 		this.name = name;
-		this.type = DungeonMobs.getCreatureType(DeityDungeon.settings.getSpawnMob(this.name));
-		this.spawnLocation = DeityDungeon.settings.getSpawnLocation(this.name);
-		this.amount = DeityDungeon.settings.getSpawnMobAmount(this.name);
+		this.type = DungeonMobs.getCreatureType(DeityDungeon.settings.getSpawnMobType(region, this.name));
+		this.spawnLocation = DeityDungeon.settings.getSpawnMobLocation(region, this.name);
+		this.amount = DeityDungeon.settings.getSpawnMobAmount(region, this.name);
 	}
 
 	public DungeonMobs(CreatureType type, Location location, int amount) {
@@ -100,24 +100,46 @@ public class DungeonMobs implements Runnable {
 		return null;
 	}
 
-	public static void schedualMobSpawn(String name) {
-		Deity.server.getServer().getScheduler().scheduleAsyncDelayedTask(Deity.plugin, new DungeonMobs(name));
+	public static DungeonMobs schedualMobSpawn(String region, String name) {
+		return new DungeonMobs(region, name);
 	}
 
-	public static void schedualMobSpawn(CreatureType type, Location location, int amount) {
-		Deity.server.getServer().getScheduler().scheduleAsyncDelayedTask(Deity.plugin, new DungeonMobs(type, location, amount));
+	public static DungeonMobs schedualMobSpawn(CreatureType type, Location location, int amount) {
+		return new DungeonMobs(type, location, amount);
+	}
+
+	public static DungeonMobs schedualMobBossSpawn(String region) {
+		return new DungeonMobs(region, "boss");
 	}
 
 	@Override
 	public void run() {
 		try {
+			int entityId = 0;
 			for (int i = 0; i < amount; i++) {
 				if (this.type != null) {
-					spawnLocation.getWorld().spawnCreature(this.spawnLocation, type);
+					if (this.name.equalsIgnoreCase("boss")) {
+						entityId = spawnLocation.getWorld().spawnCreature(this.spawnLocation, type).getEntityId();
+					} else {
+						spawnLocation.getWorld().spawnCreature(this.spawnLocation, type);
+					} 
+				}
+			}
+			if (name != null && name.equalsIgnoreCase("boss")) {
+				try {
+					Thread.sleep(5000L);
+					for (Entity e : Deity.server.getServer().getWorld(DeityDungeon.settings.world).getEntities()) {
+						if (e.getEntityId() == entityId) {
+							e.remove();
+						}
+					}
+				} catch (InterruptedException e) {
+					e.printStackTrace();
 				}
 			}
 		} catch (Exception ex) {
 		}
+
 	}
 
 }
