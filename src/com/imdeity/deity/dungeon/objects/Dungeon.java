@@ -67,6 +67,15 @@ public class Dungeon {
 		return null;
 	}
 
+	public Spawner getSpawnerFromMobId(int entityId) {
+		for (Spawner s : this.spawners) {
+			if (s.getSpawnedMobs().contains(entityId)) {
+				return s;
+			}
+		}
+		return null;
+	}
+
 	public void spawnMobsFromSpawner(int spawnerId) {
 		this.getSpawner(spawnerId).spawnMobs();
 	}

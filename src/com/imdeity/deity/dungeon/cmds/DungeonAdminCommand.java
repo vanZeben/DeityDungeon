@@ -28,15 +28,17 @@ public class DungeonAdminCommand implements CommandExecutor {
 			String dungeon = "dungeon_one";
 			String mobtype = split[1];
 			int amount = Integer.valueOf(split[2]);
+			int exp = Integer.valueOf(split[3]);
 			Location location = player.getLocation();
-			DungeonSql.addDungeonMobSpawn(dungeon, mobtype, 10, 10, location, amount, false);
+			DungeonSql.addDungeonMobSpawn(dungeon, mobtype, 10, 10, location, amount, false, exp);
 			DungeonSql.addDungeonMobDrops(mobtype, 261, 0, 4);
 		} else if (split[0].equalsIgnoreCase("ab")) {
 			String dungeon = "dungeon_one";
 			String mobtype = split[1];
 			int amount = Integer.valueOf(split[2]);
+			int exp = Integer.valueOf(split[3]);
 			Location location = player.getLocation();
-			DungeonSql.addDungeonMobSpawn(dungeon, mobtype, 10, 10, location, amount, true);
+			DungeonSql.addDungeonMobSpawn(dungeon, mobtype, 10, 10, location, amount, true, exp);
 			DungeonSql.addDungeonMobDrops(mobtype, 261, 0, 4);
 		}
 	}
