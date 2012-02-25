@@ -7,6 +7,9 @@ import org.bukkit.event.Listener;
 
 import com.imdeity.deity.dungeon.DeityDungeon;
 import com.imdeity.deity.dungeon.objects.Dungeon;
+import com.imdeity.deityapi.Deity;
+import com.imdeity.deityapi.exception.InventoryAlreadySavedException;
+import com.imdeity.deityapi.exception.NoInventorySavedException;
 import com.onarandombox.MultiversePortals.MVPortal;
 import com.onarandombox.MultiversePortals.event.MVPortalEvent;
 
@@ -117,6 +120,40 @@ public class DungeonPlayerListener implements Listener {
 				DeityDungeon.chat.sendPlayerMessage(player, "&cYou are not in this dungeon!");
 				event.setCancelled(true);
 				return;
+			}
+		} else if (portal.getName().equalsIgnoreCase("dungeon_sender")) {
+			Player player = event.getTeleportee();
+			try {
+				Deity.player.serializedPlayer.savePlayerInventory(player.getName(), Deity.player.serializedPlayer.getPlayerInventory(player), "main-world-dungeon");
+				Deity.player.serializedPlayer.savePlayerStats(player.getName(), Deity.player.serializedPlayer.getPlayerStats(player), "main-world-dungeon");
+				Deity.player.clearAllInventory(player);
+				Deity.player.clearAll(player);
+				DeityDungeon.chat.sendPlayerMessage(player, "Your inventory was saved for when you go back to the main world");
+			} catch (InventoryAlreadySavedException e) {
+				e.printStackTrace();
+			}
+			try {
+				Deity.player.serializedPlayer.setPlayerInventory(player, Deity.player.serializedPlayer.loadPlayerInventory(player, "dungeon-main-world"));
+				Deity.player.serializedPlayer.setPlayerStats(player, Deity.player.serializedPlayer.loadPlayerStats(player, "dungeon-main-world"));
+			} catch (NoInventorySavedException e) {
+				e.printStackTrace();
+			}
+		} else if (portal.getName().equalsIgnoreCase("dungeon_receiver")) {
+			Player player = event.getTeleportee();
+			try {
+				Deity.player.serializedPlayer.savePlayerInventory(player.getName(), Deity.player.serializedPlayer.getPlayerInventory(player), "dungeon-main-world");
+				Deity.player.serializedPlayer.savePlayerStats(player.getName(), Deity.player.serializedPlayer.getPlayerStats(player), "dungeon-main-world");
+				Deity.player.clearAllInventory(player);
+				Deity.player.clearAll(player);
+				DeityDungeon.chat.sendPlayerMessage(player, "Your inventory was saved for when you go back to the dungeons");
+			} catch (InventoryAlreadySavedException e) {
+				e.printStackTrace();
+			}
+			try {
+				Deity.player.serializedPlayer.setPlayerInventory(player, Deity.player.serializedPlayer.loadPlayerInventory(player, "main-world-dungeon"));
+				Deity.player.serializedPlayer.setPlayerStats(player, Deity.player.serializedPlayer.loadPlayerStats(player, "main-world-dungeon"));
+			} catch (NoInventorySavedException e) {
+				e.printStackTrace();
 			}
 		}
 	}
