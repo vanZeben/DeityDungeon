@@ -1,6 +1,7 @@
 package com.imdeity.deity.dungeon.objects;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 
 import org.bukkit.Location;
 import org.bukkit.World;
@@ -8,6 +9,7 @@ import org.bukkit.entity.Player;
 
 import com.imdeity.deity.dungeon.DeityDungeon;
 import com.imdeity.deityapi.Deity;
+import com.imdeity.deityapi.utils.HumanTime;
 
 public class Dungeon {
 
@@ -15,22 +17,21 @@ public class Dungeon {
 	public String regionName = "";
 	public World world;
 	public ArrayList<Spawner> spawners = new ArrayList<Spawner>();
-	public ArrayList<Player> players = new ArrayList<Player>();
+	public HashMap<Player, int[]> players = new HashMap<Player, int[]>();
 	public int bossSpawnRate = 5;
+	public int bossTaskId = -1;
+	public int mobTaskId = -1;
 	public int deathCountdown = 10;
+	public int mobLifeSpan = -1;
 
-	public Dungeon(int id, String regionName, World world, int bossSpawnRate, int deathCountdown) {
+	public Dungeon(int id, String regionName, World world, int bossSpawnRate, int deathCountdown, int mobLifeSpan) {
 		this.id = id;
 		this.regionName = regionName;
 		this.world = world;
 		this.bossSpawnRate = bossSpawnRate;
 		this.deathCountdown = deathCountdown;
-		this.init();
-	}
-
-	public void init() {
+		this.mobLifeSpan = mobLifeSpan;
 		this.loadSpawners();
-		this.spawnBoss();
 	}
 
 	public void loadSpawners() {
@@ -38,29 +39,16 @@ public class Dungeon {
 	}
 
 	public void spawnBoss() {
-		Deity.server.getServer().getScheduler().scheduleAsyncDelayedTask(DeityDungeon.plugin, new DungeonTasks.BossSpawner(this.getBossSpawner(), this.regionName));
+		this.bossTaskId = Deity.server.getServer().getScheduler().scheduleAsyncDelayedTask(DeityDungeon.plugin, new DungeonTasks.BossSpawner(this.regionName));
 	}
 
-	public Location getMaxLocation() {
-		return Deity.sec.toLocation(this.world, Deity.sec.getRegionFromName(this.world, this.regionName).getMaximumPoint());
-	}
-
-	public Location getMinLocation() {
-		return Deity.sec.toLocation(this.world, Deity.sec.getRegionFromName(this.world, this.regionName).getMinimumPoint());
+	public void spawnMobs() {
+		this.mobTaskId = Deity.server.getServer().getScheduler().scheduleAsyncDelayedTask(DeityDungeon.plugin, new DungeonTasks.MobSpawner(this.regionName));
 	}
 
 	public Spawner getSpawner(int id) {
 		for (Spawner s : this.spawners) {
 			if (s.id == id) {
-				return s;
-			}
-		}
-		return null;
-	}
-
-	public Spawner getSpawner(Location location) {
-		for (Spawner s : this.spawners) {
-			if (s.spawnLocation.equals(location)) {
 				return s;
 			}
 		}
@@ -80,11 +68,33 @@ public class Dungeon {
 		this.getSpawner(spawnerId).spawnMobs();
 	}
 
-	public void spawnAllMobs() {
+	public void spawnMobsExceptBoss() {
 		for (Spawner s : this.spawners) {
 			if (!s.isBoss) {
 				s.spawnMobs();
 			}
+		}
+	}
+
+	public void spawnMobsBoss() {
+		for (Spawner s : this.spawners) {
+			if (s.isBoss) {
+				s.spawnMobs();
+			}
+		}
+	}
+
+	public void spawnAllMobs() {
+		this.spawnBoss();
+		this.spawnMobs();
+		this.spawnMobsExceptBoss();
+	}
+
+	public void killAllMobs() {
+		Deity.server.getServer().getScheduler().cancelTask(bossTaskId);
+		Deity.server.getServer().getScheduler().cancelTask(mobTaskId);
+		for (Spawner s : this.spawners) {
+			s.killMobs();
 		}
 	}
 
@@ -101,13 +111,16 @@ public class Dungeon {
 		return this.getBossSpawner().getSpawnedMobs().contains(entityId);
 	}
 
-	public boolean hasPlayer(String player) {
-		for (Player p : this.players) {
-			if (p.getName().equalsIgnoreCase(player)) {
-				return true;
-			}
-		}
-		return false;
+	public Location getMaxLocation() {
+		return Deity.sec.toLocation(this.world, Deity.sec.getRegionFromName(this.world, this.regionName).getMaximumPoint());
+	}
+
+	public Location getMinLocation() {
+		return Deity.sec.toLocation(this.world, Deity.sec.getRegionFromName(this.world, this.regionName).getMinimumPoint());
+	}
+
+	public boolean hasPlayer(Player player) {
+		return this.players.containsKey(player);
 	}
 
 	public boolean isActive() {
@@ -115,14 +128,16 @@ public class Dungeon {
 	}
 
 	public void addPlayer(Player player) {
-		this.players.add(player);
 		this.sendMessage(player.getName() + " has come to join the battle!");
 		long time = this.deathCountdown * 60 * 20;
-		Deity.server.getServer().getScheduler().scheduleSyncDelayedTask(DeityDungeon.plugin, new DungeonTasks.PlayerMessager(player, "You have " + ((time * 0.10) / 20) + " seconds remaining!"), (long) (time * 0.90));
-		Deity.server.getServer().getScheduler().scheduleAsyncDelayedTask(DeityDungeon.plugin, new DungeonTasks.PlayerCounter(player, this.regionName), (long) (time * 0.10));
+		int[] timers = { Deity.server.getServer().getScheduler().scheduleSyncDelayedTask(DeityDungeon.plugin, new DungeonTasks.PlayerMessager(player, "You have " + HumanTime.exactly((long) ((time * 0.10) / 20)) + " remaining!"), (long) (time * 0.90)), Deity.server.getServer().getScheduler().scheduleAsyncDelayedTask(DeityDungeon.plugin, new DungeonTasks.PlayerCounter(player, this.regionName), time) };
+		this.players.put(player, timers);
 	}
 
 	public void removePlayer(Player player) {
+		for (int i : this.players.get(player)) {
+			Deity.server.getServer().getScheduler().cancelTask(i);
+		}
 		this.players.remove(player);
 		this.sendMessage(player.getName() + " left the battle!");
 	}
@@ -137,10 +152,10 @@ public class Dungeon {
 		if (!this.isActive()) {
 			return;
 		}
-		for (Player p : this.players) {
+		for (Player p : this.players.keySet()) {
 			DeityDungeon.chat.sendPlayerMessage(p, msg);
 		}
-		DeityDungeon.chat.sendConsoleMessage(" [" + this.regionName + "] " + msg);
+		DeityDungeon.chat.sendConsoleMessage("[" + this.regionName + "] " + msg);
 	}
 
 }

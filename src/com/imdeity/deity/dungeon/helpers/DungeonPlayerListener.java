@@ -92,9 +92,12 @@ public class DungeonPlayerListener implements Listener {
 			Player player = event.getTeleportee();
 			String dungeonName = portal.getName().split("-")[2];
 			Dungeon dungeon = DeityDungeon.getDungeon(dungeonName);
-			if (!dungeon.hasPlayer(player.getName())) {
+			if (!dungeon.hasPlayer(player)) {
+				if (!dungeon.isActive()) {
+					dungeon.spawnAllMobs();
+				}
 				dungeon.addPlayer(player);
-				dungeon.spawnAllMobs();
+				DeityDungeon.chat.sendPlayerMessage(player, "You joined " + dungeonName);
 			} else {
 				DeityDungeon.chat.sendPlayerMessage(player, "&cYou are already in this dungeon!");
 				event.setCancelled(true);
@@ -104,8 +107,12 @@ public class DungeonPlayerListener implements Listener {
 			Player player = event.getTeleportee();
 			String dungeonName = portal.getName().split("-")[2];
 			Dungeon dungeon = DeityDungeon.getDungeon(dungeonName);
-			if (dungeon.hasPlayer(player.getName())) {
+			if (dungeon.hasPlayer(player)) {
 				dungeon.removePlayer(player);
+				if (!dungeon.isActive()) {
+					dungeon.killAllMobs();
+				}
+				DeityDungeon.chat.sendPlayerMessage(player, "You left " + dungeonName);
 			} else {
 				DeityDungeon.chat.sendPlayerMessage(player, "&cYou are not in this dungeon!");
 				event.setCancelled(true);

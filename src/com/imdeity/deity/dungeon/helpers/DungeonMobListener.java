@@ -90,15 +90,17 @@ public class DungeonMobListener implements Listener {
 				if (DeityDungeon.getDungeon(s) != null) {
 					Dungeon dungeon = DeityDungeon.getDungeon(s);
 					Spawner spawner = dungeon.getSpawnerFromMobId(entity.getEntityId());
-					if (spawner.isBoss) {
-						dungeon.sendMessage(((LivingEntity) entity).getKiller().getName() + " has killed the boss!");
+					if (spawner != null) {
+						if (spawner.isBoss) {
+							dungeon.sendMessage(((LivingEntity) entity).getKiller().getName() + " has killed the boss!");
+						}
+						event.setDroppedExp(spawner.expDropped);
+						event.getDrops().clear();
+						for (ItemStack i : spawner.drops) {
+							event.getDrops().add(i);
+						}
+						break;
 					}
-					event.setDroppedExp(spawner.expDropped);
-					event.getDrops().clear();
-					for (ItemStack i : spawner.drops) {
-						event.getDrops().add(i);
-					}
-					break;
 				}
 			}
 		}

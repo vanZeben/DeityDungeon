@@ -6,6 +6,7 @@ import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 
+import com.imdeity.deity.dungeon.DeityDungeon;
 import com.imdeity.deity.dungeon.objects.DungeonSql;
 
 public class DungeonAdminCommand implements CommandExecutor {
@@ -24,6 +25,9 @@ public class DungeonAdminCommand implements CommandExecutor {
 
 	public void parseCmds(Player player, String[] split) {
 		if (split.length == 0) {
+		} else if (split[0].equalsIgnoreCase("reload")) {
+			DeityDungeon.dungeons.clear();
+			DeityDungeon.plugin.loadDungeons();
 		} else if (split[0].equalsIgnoreCase("ar")) {
 			String dungeon = "dungeon_one";
 			String mobtype = split[1];

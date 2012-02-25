@@ -5,13 +5,11 @@ import org.bukkit.entity.Player;
 import com.imdeity.deity.dungeon.DeityDungeon;
 
 public class DungeonTasks {
-	
+
 	public static class BossSpawner implements Runnable {
-		private Spawner spawner;
 		private String dungeon = "";
 
-		public BossSpawner(Spawner spawner, String dungeon) {
-			this.spawner = spawner;
+		public BossSpawner(String dungeon) {
 			this.dungeon = dungeon;
 		}
 
@@ -30,7 +28,37 @@ public class DungeonTasks {
 					Thread.sleep(time);
 					dungeon.sendMessage("&aA shreak pierces your ears as the boss spawns");
 					if (dungeon.isActive()) {
-						spawner.spawnMobs();
+						dungeon.spawnMobsBoss();
+					}
+				}
+			} catch (Exception ex) {
+			}
+		}
+	}
+
+	public static class MobSpawner implements Runnable {
+		private String dungeon = "";
+
+		public MobSpawner(String dungeon) {
+			this.dungeon = dungeon;
+		}
+
+		@Override
+		public void run() {
+			try {
+				while (true) {
+					Dungeon dungeon = DeityDungeon.getDungeon(this.dungeon);
+					int totalTime = dungeon.mobLifeSpan * 60 * 1000;
+					long time = (long) (totalTime * 0.90);
+
+					Thread.sleep(time);
+					dungeon.sendMessage("&7A new wave of monsters is approaching...");
+					time = (long) (totalTime * 0.10);
+
+					Thread.sleep(time);
+					dungeon.sendMessage("&aNext Wave!");
+					if (dungeon.isActive()) {
+						dungeon.spawnMobsExceptBoss();
 					}
 				}
 			} catch (Exception ex) {
