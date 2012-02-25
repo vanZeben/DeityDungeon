@@ -15,7 +15,7 @@ public class DungeonMessaging {
 	}
 
 	public void sendPlayerMessage(Player player, String msg) {
-		Deity.chat.sendPlayerMessage(player, "&f" + msg);
+		Deity.chat.sendPlayerMessage(player, "DeityDungeon", "&f" + msg);
 	}
-	
+
 }

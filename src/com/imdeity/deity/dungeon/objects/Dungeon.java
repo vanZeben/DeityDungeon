@@ -1,132 +1,99 @@
 package com.imdeity.deity.dungeon.objects;
 
 import java.util.ArrayList;
-import java.util.List;
 
 import org.bukkit.Location;
-import org.bukkit.entity.Entity;
+import org.bukkit.World;
 import org.bukkit.entity.Player;
 
 import com.imdeity.deity.dungeon.DeityDungeon;
-import com.imdeity.deity.dungeon.helpers.DungeonMobs;
 import com.imdeity.deityapi.Deity;
 
 public class Dungeon {
 
-	private String regionName = "";
-	private ArrayList<String> spawners = new ArrayList<String>();
-	public boolean use = false;
-	private int bossSpawnRate = 5;
+	public int id;
+	public String regionName = "";
+	public World world;
+	public ArrayList<Spawner> spawners = new ArrayList<Spawner>();
+	public ArrayList<Player> players = new ArrayList<Player>();
+	public int bossSpawnRate = 5;
+	public int deathCountdown = 10;
 
-	public Dungeon(String regionName, int bossSpawnRate) {
+	public Dungeon(int id, String regionName, World world, int bossSpawnRate, int deathCountdown) {
+		this.id = id;
 		this.regionName = regionName;
+		this.world = world;
 		this.bossSpawnRate = bossSpawnRate;
+		this.deathCountdown = deathCountdown;
+		this.init();
 	}
 
 	public void init() {
-		this.setSpawners();
-		this.use = true;
-		this.spawnMobs();
+		this.loadSpawners();
+		this.spawnBoss();
 	}
 
-	public void spawnMobs() {
-		for (String s : spawners) {
-			Deity.server.getServer().getScheduler().scheduleAsyncDelayedTask(Deity.plugin, DungeonMobs.schedualMobSpawn(regionName, s));
-		}
+	public void loadSpawners() {
+		this.spawners = DungeonSql.getDungeonSpawners(this.id);
 	}
 
 	public void spawnBoss() {
-		Deity.server.getServer().getScheduler().scheduleAsyncDelayedTask(Deity.plugin, DungeonMobs.schedualMobBossSpawn(regionName),  60 * 20);
-		Deity.server.getServer().getScheduler().scheduleAsyncDelayedTask(Deity.plugin, new Runnable() {
-			public void run() {
-				DungeonStorage.getDungeon(regionName).sendEventMessage("&7A shiver runs down your spine...");
-			}
-		}, /*((this.bossSpawnRate / 4) * 3) * 60*/30 * 20);
-	}
-
-	public void sendEventMessage(String msg) {
-		for (Player p : this.getPlayersInside()) {
-			DeityDungeon.chat.sendPlayerMessage(p, msg);
-		}
-	}
-
-	public void setSpawners() {
-		int i = 1;
-		while (DeityDungeon.settings.getSpawnMobType(this.regionName, "" + i) != null) {
-			this.spawners.add(i + "");
-			i++;
-		}
+		Deity.server.getServer().getScheduler().scheduleAsyncDelayedTask(DeityDungeon.plugin, new DungeonTasks.BossSpawner(this.getBossSpawner(), this.regionName));
 	}
 
 	public Location getMaxLocation() {
-		return Deity.sec.toLocation(Deity.server.getServer().getWorld(DeityDungeon.settings.world), Deity.sec.getRegionFromName(Deity.server.getServer().getWorld(DeityDungeon.settings.world), this.regionName).getMaximumPoint());
+		return Deity.sec.toLocation(this.world, Deity.sec.getRegionFromName(this.world, this.regionName).getMaximumPoint());
 	}
 
 	public Location getMinLocation() {
-		return Deity.sec.toLocation(Deity.server.getServer().getWorld(DeityDungeon.settings.world), Deity.sec.getRegionFromName(Deity.server.getServer().getWorld(DeityDungeon.settings.world), this.regionName).getMinimumPoint());
+		return Deity.sec.toLocation(this.world, Deity.sec.getRegionFromName(this.world, this.regionName).getMinimumPoint());
 	}
 
-	public boolean compareLocation(int x, int y, int z) {
-		int minX = (int) this.getMinLocation().getX();
-		int maxX = (int) this.getMaxLocation().getX();
-		if (minX > maxX) {
-			int tmpMin = minX;
-			minX = maxX;
-			maxX = tmpMin;
-		}
-		if (minX <= x && x <= maxX) {
-			int minZ = (int) this.getMinLocation().getZ();
-			int maxZ = (int) this.getMaxLocation().getZ();
-			if (minZ > maxZ) {
-				int tmpMin = minZ;
-				minZ = maxZ;
-				maxZ = tmpMin;
-			}
-			if (minZ <= z && z <= maxZ) {
-				int minY = (int) this.getMinLocation().getY();
-				int maxY = (int) this.getMaxLocation().getY();
-				if (minY > maxY) {
-					int tmpMin = minY;
-					minY = maxY;
-					maxY = tmpMin;
-				}
-				if (minZ <= z && z <= maxZ) {
-					return true;
-				}
+	public Spawner getSpawner(int id) {
+		for (Spawner s : this.spawners) {
+			if (s.id == id) {
+				return s;
 			}
 		}
-		return false;
+		return null;
 	}
 
-	public List<Entity> getMobsInside() {
-		List<Entity> entities = Deity.server.getServer().getWorld(DeityDungeon.settings.world).getEntities();
-		for (int i = 0; i < entities.size(); i++) {
-			Entity e = entities.get(i);
-			if (e instanceof Player) {
-				entities.remove(i);
-				continue;
-			}
-			if (!compareLocation((int) e.getLocation().getX(), (int) e.getLocation().getY(), (int) e.getLocation().getZ())) {
-				entities.remove(i);
-				continue;
+	public Spawner getSpawner(Location location) {
+		for (Spawner s : this.spawners) {
+			if (s.spawnLocation.equals(location)) {
+				return s;
 			}
 		}
-		return entities;
+		return null;
 	}
 
-	public List<Player> getPlayersInside() {
-		List<Player> players = Deity.server.getServer().getWorld(DeityDungeon.settings.world).getPlayers();
-		for (int i = 0; i < players.size(); i++) {
-			Entity e = players.get(i);
-			if (!compareLocation((int) e.getLocation().getX(), (int) e.getLocation().getY(), (int) e.getLocation().getZ())) {
-				players.remove(i);
+	public void spawnMobsFromSpawner(int spawnerId) {
+		this.getSpawner(spawnerId).spawnMobs();
+	}
+
+	public void spawnAllMobs() {
+		for (Spawner s : this.spawners) {
+			if (!s.isBoss) {
+				s.spawnMobs();
 			}
 		}
-		return players;
 	}
 
-	public boolean isInDungeon(String player) {
-		for (Player p : this.getPlayersInside()) {
+	public Spawner getBossSpawner() {
+		for (Spawner s : this.spawners) {
+			if (s.isBoss) {
+				return s;
+			}
+		}
+		return null;
+	}
+
+	public boolean isBoss(int entityId) {
+		return this.getBossSpawner().getSpawnedMobs().contains(entityId);
+	}
+
+	public boolean hasPlayer(String player) {
+		for (Player p : this.players) {
 			if (p.getName().equalsIgnoreCase(player)) {
 				return true;
 			}
@@ -134,107 +101,37 @@ public class Dungeon {
 		return false;
 	}
 
-	public class ButcherTask implements Runnable {
-
-		public void run() {
-			try {
-				for (Entity e : Deity.server.getServer().getWorld(DeityDungeon.settings.world).getEntities()) {
-					if (compareLocation((int) e.getLocation().getX(), (int) e.getLocation().getY(), (int) e.getLocation().getZ())) {
-						if (e instanceof Player) {
-							((Player) e).setHealth(0);
-							// TODO send time up message
-							System.out.println("Player Lost");
-						} else {
-							e.remove();
-							System.out.println("Removing Entity");
-						}
-					}
-				}
-			} catch (Exception ex) {
-			}
-		}
-
+	public boolean isActive() {
+		return !this.players.isEmpty();
 	}
 
-	public class CountdownTask implements Runnable {
-
-		private Location minPoint;
-		private Location maxPoint;
-		private double timeLeft = 0;
-
-		public CountdownTask(Location minPoint, Location maxPoint, double timeLeft) {
-			this.minPoint = minPoint;
-			this.maxPoint = maxPoint;
-			this.timeLeft = timeLeft;
-		}
-
-		public void run() {
-			try {
-				for (Entity e : minPoint.getWorld().getEntities()) {
-					if (compareLocation((int) e.getLocation().getX(), (int) e.getLocation().getY(), (int) e.getLocation().getZ())) {
-						if (e instanceof Player) {
-							DeityDungeon.chat.sendPlayerMessage((Player) e, "&c" + (this.timeLeft == 1 ? " 1 minute" : this.timeLeft + " minutes") + " left!");
-							timeLeft -= 1;
-						}
-					}
-				}
-			} catch (Exception ex) {
-			}
-		}
-
-		public boolean compareLocation(int x, int y, int z) {
-			int minX = (int) minPoint.getX();
-			int maxX = (int) maxPoint.getX();
-			if (minX > maxX) {
-				int tmpMin = minX;
-				minX = maxX;
-				maxX = tmpMin;
-			}
-			if (minX <= x && x <= maxX) {
-				int minZ = (int) minPoint.getZ();
-				int maxZ = (int) maxPoint.getZ();
-				if (minZ > maxZ) {
-					int tmpMin = minZ;
-					minZ = maxZ;
-					maxZ = tmpMin;
-				}
-				if (minZ <= z && z <= maxZ) {
-					int minY = (int) minPoint.getY();
-					int maxY = (int) maxPoint.getY();
-					if (minY > maxY) {
-						int tmpMin = minY;
-						minY = maxY;
-						maxY = tmpMin;
-					}
-					if (minZ <= z && z <= maxZ) {
-						return true;
-					}
-				}
-			}
-			return false;
-		}
+	public void addPlayer(Player player) {
+		this.players.add(player);
+		this.sendMessage(player.getName() + " has come to join the battle!");
+		long time = this.deathCountdown * 60 * 20;
+		Deity.server.getServer().getScheduler().scheduleSyncDelayedTask(DeityDungeon.plugin, new DungeonTasks.PlayerMessager(player, "You have " + ((time * 0.10) / 20) + " seconds remaining!"), (long) (time * 0.90));
+		Deity.server.getServer().getScheduler().scheduleAsyncDelayedTask(DeityDungeon.plugin, new DungeonTasks.PlayerCounter(player, this.regionName), (long) (time * 0.10));
 	}
-	//
-	// protected void playPotionEffect(final Player player, final LivingEntity
-	// entity, int color, int duration) {
-	// final DataWatcher dw = new DataWatcher();
-	// dw.a(8, Integer.valueOf(0));
-	// dw.watch(8, Integer.valueOf(color));
-	//
-	// Packet40EntityMetadata packet = new
-	// Packet40EntityMetadata(entity.getEntityId(), dw);
-	// ((CraftPlayer)player).getHandle().netServerHandler.sendPacket(packet);
-	//
-	// Bukkit.getScheduler().scheduleSyncDelayedTask(Deity.plugin, new
-	// Runnable() {
-	// public void run() {
-	// DataWatcher dwReal =
-	// ((CraftLivingEntity)entity).getHandle().getDataWatcher();
-	// dw.watch(8, dwReal.getInt(8));
-	// Packet40EntityMetadata packet = new
-	// Packet40EntityMetadata(entity.getEntityId(), dw);
-	// ((CraftPlayer)player).getHandle().netServerHandler.sendPacket(packet);
-	// }
-	// }, duration);
-	// }
+
+	public void removePlayer(Player player) {
+		this.players.remove(player);
+		this.sendMessage(player.getName() + " left the battle!");
+	}
+
+	public void removePlayerFailed(Player player) {
+		this.players.remove(player);
+		Deity.player.teleport(player, this.world.getSpawnLocation());
+		this.sendMessage(player.getName() + " failed to kill the boss in time!");
+	}
+
+	public void sendMessage(String msg) {
+		if (!this.isActive()) {
+			return;
+		}
+		for (Player p : this.players) {
+			DeityDungeon.chat.sendPlayerMessage(p, msg);
+		}
+		DeityDungeon.chat.sendConsoleMessage(" [" + this.regionName + "] " + msg);
+	}
+
 }
