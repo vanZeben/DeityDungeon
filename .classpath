@@ -2,11 +2,11 @@
 <classpath>
 	<classpathentry kind="src" path="src"/>
 	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER"/>
-	<classpathentry kind="lib" path="/Users/vanZeben/Dropbox/Public/Server/plugins/DeityAPI.jar"/>
 	<classpathentry kind="lib" path="/Users/vanZeben/Dropbox/Public/Server/craftbukkit.jar"/>
-	<classpathentry kind="lib" path="/Users/vanZeben/Dropbox/Public/Server/plugins/Multiverse-Core.jar"/>
+	<classpathentry kind="lib" path="/Users/vanZeben/Dropbox/Public/Server/plugins/Multiverse-Core-2.4.jar"/>
 	<classpathentry kind="lib" path="/Users/vanZeben/Dropbox/Public/Server/plugins/Multiverse-Portals.jar"/>
-	<classpathentry kind="lib" path="/Users/vanZeben/Dropbox/Public/Server/plugins/WorldEdit.jar"/>
-	<classpathentry kind="lib" path="/Users/vanZeben/Dropbox/Public/Server/plugins/WorldGuard.jar"/>
+	<classpathentry kind="lib" path="/Users/vanZeben/Dropbox/Public/Server/plugins/worldedit-5.3-SNAPSHOT.jar"/>
+	<classpathentry kind="lib" path="/Users/vanZeben/Dropbox/Public/Server/plugins/worldguard-5.3-SNAPSHOT.jar"/>
+	<classpathentry kind="lib" path="/Users/vanZeben/Dropbox/Public/Server/plugins/DeityAPI.jar"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>

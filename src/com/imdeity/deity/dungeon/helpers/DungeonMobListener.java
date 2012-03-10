@@ -32,13 +32,9 @@ import com.imdeity.deityapi.Deity;
 
 public class DungeonMobListener implements Listener {
 
-	@EventHandler(priority = EventPriority.NORMAL)
+	@EventHandler(priority = EventPriority.MONITOR)
 	public void onEntityDamage(EntityDamageEvent event) {
 		if (event.isCancelled()) {
-			return;
-		}
-		if (event.getEntity().isDead()) {
-			event.setCancelled(true);
 			return;
 		}
 		if (event.getCause() == EntityDamageEvent.DamageCause.ENTITY_ATTACK) {
@@ -65,7 +61,7 @@ public class DungeonMobListener implements Listener {
 					}
 				}
 			} else if (attacker instanceof Player) {
-				if (isHostileMob(attacker)) {
+				if (isHostileMob(defender)) {
 					for (String s : Deity.sec.getRegionsAtLocation(attacker.getLocation())) {
 						if (DeityDungeon.getDungeon(s) != null) {
 							Dungeon dungeon = DeityDungeon.getDungeon(s);
@@ -82,7 +78,7 @@ public class DungeonMobListener implements Listener {
 		}
 	}
 
-	@EventHandler(priority = EventPriority.NORMAL)
+	@EventHandler(priority = EventPriority.MONITOR)
 	public void onEntityDeath(EntityDeathEvent event) {
 		Entity entity = event.getEntity();
 		if (isHostileMob(entity)) {

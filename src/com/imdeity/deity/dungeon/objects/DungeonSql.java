@@ -62,14 +62,16 @@ public class DungeonSql {
 					ArrayList<ItemStack> tmp = new ArrayList<ItemStack>();
 					sql = "SELECT `item_id`, `item_amount`, `item_damage_value` FROM " + Deity.data.getDB().tableName("deity_", "dungeon_mob_drops") + " WHERE `mob_id` = ?;";
 					DatabaseResults query2 = Deity.data.getDB().Read2(sql, query.getInteger(i, "id"));
-					for (int ii = 0; ii < query2.rowCount(); ii++) {
-						short damage = 1;
-						while (damage <= query2.getInteger(ii, "item_damage_value")) {
-							damage++;
+					if (query2 != null && query2.hasRows()) {
+						for (int ii = 0; ii < query2.rowCount(); ii++) {
+							short damage = 1;
+							while (damage <= query2.getInteger(ii, "item_damage_value")) {
+								damage++;
+							}
+							tmp.add(new ItemStack(query2.getInteger(ii, "item_id"), query2.getInteger(ii, "item_amount"), damage));
 						}
-						tmp.add(new ItemStack(query2.getInteger(ii, "item_id"), query2.getInteger(ii, "item_amount"), damage));
 					}
-					spawners.add(new Spawner(query.getInteger(i, "id"), id, Deity.mob.getCreatureType(query.getString(i, "name")), query.getInteger(i, "spawn_amount"), query.getInteger(i, "damage_dealt"), query.getInteger(i, "damage_received"), new Location(Deity.server.getServer().getWorld(query.getString(i, "spawn_world")), query.getInteger(i, "spawn_loc_x"), query.getInteger(i, "spawn_loc_y"), query.getInteger(i, "spawn_loc_z")), (query.getInteger(i, "is_boss") == 0 ? false : true), tmp, query.getInteger(i, "exp_dropped")));
+					spawners.add(new Spawner(query.getInteger(i, "id"), id, Deity.mob.getEntityType(query.getString(i, "name")), query.getInteger(i, "spawn_amount"), query.getInteger(i, "damage_dealt"), query.getInteger(i, "damage_received"), new Location(Deity.server.getServer().getWorld(query.getString(i, "spawn_world")), query.getInteger(i, "spawn_loc_x"), query.getInteger(i, "spawn_loc_y"), query.getInteger(i, "spawn_loc_z")), (query.getInteger(i, "is_boss") == 0 ? false : true), tmp, query.getInteger(i, "exp_dropped")));
 				} catch (SQLDataException e) {
 					e.printStackTrace();
 				}
@@ -81,13 +83,18 @@ public class DungeonSql {
 		return spawners;
 	}
 
+	public static void addDungeon(String dungeon, String world, int bossSpawnInterval, int deathCountdown, int mobLifeSpan) {
+		String sql = "INSERT INTO " + Deity.data.getDB().tableName("deity_", "dungeons") + " (`name`, `world`, `boss_spawn_interval`, `death_countdown`, `mob_life_span`) VALUES (?,?,?,?,?);";
+		Deity.data.getDB().Write(sql, dungeon, world, bossSpawnInterval, deathCountdown, mobLifeSpan);
+	}
+
 	public static void addDungeonMobSpawn(String dungeon, String name, int damageDealt, int damageReceived, Location location, int amount, boolean isBoss, int expDropped) {
 		String sql = "INSERT INTO " + Deity.data.getDB().tableName("deity_", "dungeon_mobs") + " (name, dungeon_id, damage_dealt, damage_received, spawn_world, spawn_loc_x, spawn_loc_y, spawn_loc_z, spawn_amount, is_boss, exp_dropped) VALUES (?,?,?,?,?,?,?,?,?,?,?);";
 		Deity.data.getDB().Write(sql, name, DungeonSql.getDungeonIdFromName(dungeon), damageDealt, damageReceived, location.getWorld().getName(), (int) location.getX(), (int) location.getY(), (int) location.getZ(), amount, (isBoss ? 1 : 0), expDropped);
 	}
 
-	public static void addDungeonMobDrops(String name, int itemId, int itemDamage, int itemAmount) {
-		String sql = "INSERT INTO " + Deity.data.getDB().tableName("deity_", "dungeon_mob_drops") + " (mob_id, item_id, item_damage_value, item_amount) VALUES ((SELECT id FROM " + Deity.data.getDB().tableName("deity_", "dungeon_mobs") + " WHERE name = ?), ?,?,?);";
-		Deity.data.getDB().Write(sql, name, itemId, itemDamage, itemAmount);
+	public static void addDungeonMobDrops(int mobId, int itemId, int itemDamage, int itemAmount) {
+		String sql = "INSERT INTO " + Deity.data.getDB().tableName("deity_", "dungeon_mob_drops") + " (mob_id, item_id, item_damage_value, item_amount) VALUES (?,?,?,?);";
+		Deity.data.getDB().Write(sql, mobId, itemId, itemDamage, itemAmount);
 	}
 }

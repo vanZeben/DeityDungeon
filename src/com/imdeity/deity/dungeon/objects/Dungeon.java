@@ -2,6 +2,7 @@ package com.imdeity.deity.dungeon.objects;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 
 import org.bukkit.Location;
 import org.bukkit.World;
@@ -10,6 +11,7 @@ import org.bukkit.entity.Player;
 import com.imdeity.deity.dungeon.DeityDungeon;
 import com.imdeity.deityapi.Deity;
 import com.imdeity.deityapi.utils.HumanTime;
+import com.imdeity.deityapi.utils.StringMgmt;
 
 public class Dungeon {
 
@@ -71,7 +73,12 @@ public class Dungeon {
 	public void spawnMobsExceptBoss() {
 		for (Spawner s : this.spawners) {
 			if (!s.isBoss) {
-				s.spawnMobs();
+				for (Player p : this.getPlayers()) {
+					if (s.compareLocation(p.getLocation()) <= 25) {
+						s.spawnMobs();
+						break;
+					}
+				}
 			}
 		}
 	}
@@ -79,7 +86,12 @@ public class Dungeon {
 	public void spawnMobsBoss() {
 		for (Spawner s : this.spawners) {
 			if (s.isBoss) {
-				s.spawnMobs();
+				for (Player p : this.getPlayers()) {
+					if (s.compareLocation(p.getLocation()) <= 25) {
+						s.spawnMobs();
+						break;
+					}
+				}
 			}
 		}
 	}
@@ -123,6 +135,14 @@ public class Dungeon {
 		return this.players.containsKey(player);
 	}
 
+	public List<Player> getPlayers() {
+		ArrayList<Player> tmpplayers = new ArrayList<Player>();
+		for (Player p : this.players.keySet()) {
+			tmpplayers.add(p);
+		}
+		return tmpplayers;
+	}
+
 	public boolean isActive() {
 		return !this.players.isEmpty();
 	}
@@ -158,4 +178,12 @@ public class Dungeon {
 		DeityDungeon.chat.sendConsoleMessage("[" + this.regionName + "] " + msg);
 	}
 
+	public ArrayList<String> getFormattedSpawners() {
+		StringMgmt mgmt = new StringMgmt();
+		ArrayList<String> tmp = new ArrayList<String>();
+		for (Spawner s : this.spawners) {
+			tmp.add("<newline>   " + mgmt.join(s.getFormatted(), "<newline>   "));
+		}
+		return tmp;
+	}
 }

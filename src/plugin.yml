@@ -9,4 +9,4 @@ softdepend: [DeityAPI]
 
 commands:
     DungeonAdmin:
-        aliases: []
+        aliases: [da, dungeon]
