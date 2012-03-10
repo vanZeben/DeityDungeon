@@ -1,6 +1,6 @@
 name: DeityDungeon
 main: com.imdeity.deity.dungeon.DeityDungeon
-version: 17.02.19
+version: 09.03.12
 language: english.yml
 authors: [vanZeben]
 description: Dungeon Plugin for ImDeity.com
